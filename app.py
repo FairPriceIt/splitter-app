@@ -98,7 +98,7 @@ def serve_file(filename):
     return send_file(full_path)
 
 
-if __name__ == '__main__':
+if __name__ == 'app':
     addr=8080
     http_server = WSGIServer(('', addr), app)
     print("Listening on ",addr)
