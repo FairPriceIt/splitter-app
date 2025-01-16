@@ -98,8 +98,8 @@ def serve_file(filename):
     return send_file(full_path)
 
 
-if __name__ == 'app':
-    addr=5000
-    http_server = WSGIServer(('', addr), app)
-    print("Listening on ",addr)
-    http_server.serve_forever()
+# if __name__ == 'app':
+#     addr=5000
+#     http_server = WSGIServer(('', addr), app)
+#     print("Listening on ",addr)
+#     http_server.serve_forever()
