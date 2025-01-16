@@ -99,7 +99,7 @@ def serve_file(filename):
 
 
 if __name__ == 'app':
-    addr=8080
+    addr=5000
     http_server = WSGIServer(('', addr), app)
     print("Listening on ",addr)
     http_server.serve_forever()
