@@ -6,6 +6,11 @@ import demucs.separate
 from pathlib import Path
 import torch
 from gevent.pywsgi import WSGIServer
+from demucs import pretrained
+import requests
+MODEL_NAME="htdemucs"
+
+model = pretrained.get_model(MODEL_NAME)
 
 app = Flask(__name__)
 
@@ -22,56 +27,79 @@ def split_audio(input_path, output_folder):
     Splits the audio file using the Demucs model.
     """
     try:
-        demucs.separate.main(["--mp3","--two-stems","vocals","-n","mdx_extra",input_path,"-o",output_folder,"--device",'cuda' if torch.cuda.is_available() else 'cpu'])
+        demucs.separate.main(["--mp3","--two-stems","vocals","--mp3-bitrate", "160","-n",MODEL_NAME,input_path,"-o",output_folder,"--device",'cuda' if torch.cuda.is_available() else 'cpu', ])
         # Save results
         base_name = Path(input_path).stem
-        output_dir = Path(output_folder) / base_name
+        output_dir = Path(output_folder)/MODEL_NAME / base_name
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        vocals_path = output_dir / "vocals.wav"
-        music_path = output_dir / "no_vocals.wav"
+        vocals_path = output_dir / "vocals.mp3"
+        music_path = output_dir / "no_vocals.mp3"
         return str(vocals_path), str(music_path)
     except Exception as e:
         raise RuntimeError(f"Demucs processing failed: {e}")
 
+def download_file_from_url(url, upload_folder):
+    """Download a file from a URL and save it locally."""
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        filename = str(uuid.uuid4()) + "_downloaded_audio.mp3"
+        file_path = os.path.join(upload_folder, filename)
+        with open(file_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                f.write(chunk)
+        return file_path
+    else:
+        raise RuntimeError(f"Failed to download file from URL: {response.status_code}")
+
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file part in the request"}), 400
+    if 'file' not in request.files and 'url' not in request.form:
+        return jsonify({"error": "No file or URL provided"}), 400
 
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No file selected for uploading"}), 400
+    input_path = None
+    
+    if 'file' in request.files:
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No file selected for uploading"}), 400
 
-    if file:
-        # Save the uploaded file
         filename = secure_filename(file.filename)
         file_id = str(uuid.uuid4())
         input_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{file_id}_{filename}")
         file.save(input_path)
 
+    elif 'url' in request.form:
+        url = request.form['url']
         try:
-            # Process the file with Demucs
-            vocals_path, music_path = split_audio(input_path, app.config['OUTPUT_FOLDER'])
-
-            # Construct public paths
-            vocals_url = f"/files/{os.path.relpath(vocals_path, app.config['OUTPUT_FOLDER'])}"
-            music_url = f"/files/{os.path.relpath(music_path, app.config['OUTPUT_FOLDER'])}"
-
-            return jsonify({"vocals_url": vocals_url, "no_vocals_url": music_url})
+            input_path = download_file_from_url(url, app.config['UPLOAD_FOLDER'])
         except RuntimeError as e:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"error": str(e)}), 400
+    try:
+        # Process the file with Demucs
+        vocals_path, music_path = split_audio(input_path, app.config['OUTPUT_FOLDER'])
+
+        # Construct public paths
+        vocals_url = f"/files/{os.path.relpath(vocals_path, app.config['OUTPUT_FOLDER'])}"
+        music_url = f"/files/{os.path.relpath(music_path, app.config['OUTPUT_FOLDER'])}"
+
+        return jsonify({"vocals_url": vocals_url, "no_vocals_url": music_url})
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/files/<path:filename>', methods=['GET'])
 def serve_file(filename):
     full_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
+    print(full_path)
     if not os.path.exists(full_path):
         return jsonify({"error": "File not found"}), 404
     return send_file(full_path)
 
 
 if __name__ == '__main__':
-    http_server = WSGIServer(('', 5000), app)
+    addr=8080
+    http_server = WSGIServer(('', addr), app)
+    print("Listening on ",addr)
     http_server.serve_forever()
