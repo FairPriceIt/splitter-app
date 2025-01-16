@@ -4,6 +4,7 @@ import uuid
 from werkzeug.utils import secure_filename
 import demucs.separate
 from pathlib import Path
+import torch
 
 app = Flask(__name__)
 
@@ -20,7 +21,7 @@ def split_audio(input_path, output_folder):
     Splits the audio file using the Demucs model.
     """
     try:
-        demucs.separate.main(["--mp3","--two-stems","vocals","-n","mdx_extra",input_path,"-o",output_folder])
+        demucs.separate.main(["--mp3","--two-stems","vocals","-n","mdx_extra",input_path,"-o",output_folder,"--device",'cuda' if torch.cuda.is_available() else 'cpu'])
         # Save results
         base_name = Path(input_path).stem
         output_dir = Path(output_folder) / base_name
