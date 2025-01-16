@@ -1,0 +1,6 @@
+demucs==4.0.1
+Flask==2.2.5
+gevent==24.11.1
+torch==2.0.0
+Werkzeug==2.2.3
+numpy==1.26.4x

@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 import demucs.separate
 from pathlib import Path
 import torch
+from gevent.pywsgi import WSGIServer
 
 app = Flask(__name__)
 
@@ -72,4 +73,5 @@ def serve_file(filename):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    http_server = WSGIServer(('', 5000), app)
+    http_server.serve_forever()
