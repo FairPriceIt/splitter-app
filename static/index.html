@@ -206,7 +206,7 @@
               });
               vocalsPreview.ontimeupdate = () => {
                   if (!vocalsWaveform.isPlaying()) {
-                      vocalsWaveform.setCurrentTime(vocalsPreview.currentTime);
+                      vocalsWaveform.seekTo(vocalsPreview.currentTime / vocalsPreview.duration);
                   }
               };
 
@@ -228,7 +228,7 @@
               });
               musicPreview.ontimeupdate = () => {
                   if (!musicWaveform.isPlaying()) {
-                      musicWaveform.setCurrentTime(musicPreview.currentTime);
+                      musicWaveform.seekTo(musicPreview.currentTime / musicPreview.duration);
                   }
               };
 
