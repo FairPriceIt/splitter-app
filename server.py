@@ -117,7 +117,7 @@ def merge_audio():
 
     vocals_file = request.files['vocals']
     music_file = request.files['music']
-    volume_reduction = int(request.form.get('volume_reduction', 8))  # Default to 12 dB
+    volume_reduction = int(request.form.get('volume_reduction', 4))  # Default to 12 dB
 
     # Create a temporary directory to store files
     temp_dir = "temp_audio"
