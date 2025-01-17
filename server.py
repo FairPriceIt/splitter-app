@@ -167,6 +167,13 @@ def serve_file(filename):
 def send_index():
     return send_from_directory('static', 'index.html')
 
+@app.route('/<path:path>')
+def send_index(path):
+    return send_from_directory('static', path)
+
+
+
+
 # addr=5001
 # http_server = WSGIServer(('', addr), app)
 # print("Listening on ",addr)

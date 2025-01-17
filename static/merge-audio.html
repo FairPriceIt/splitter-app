@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Audio</title>
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a> |
+        <a href="/merge-audio.html">Merge Audio</a>
+    </nav>
+    <h1>Merge Audio Files</h1>
+    <div>
+        <label for="vocals">Upload Vocals File:</label>
+        <input type="file" id="vocals" accept="audio/*" required><br><br>
+
+        <label for="music">Upload Music File:</label>
+        <input type="file" id="music" accept="audio/*" required><br><br>
+
+        <label for="volumeReduction">Music Volume Reduction (dB):</label>
+        <input type="number" id="volumeReduction" value="12" min="0"><br><br>
+
+        <button id="mergeButton">Merge Audio</button>
+    </div>
+
+    <h2>Audio Previews</h2>
+    <div>
+        <h3>Vocals Preview:</h3>
+        <audio id="vocalsPreview" controls></audio>
+    </div>
+    <div>
+        <h3>Music Preview:</h3>
+        <audio id="musicPreview" controls></audio>
+    </div>
+    <div>
+        <h3>Merged Audio Preview:</h3>
+        <audio id="mergedPreview" controls></audio>
+    </div>
+
+    <script>
+        const vocalsInput = document.getElementById('vocals');
+        const musicInput = document.getElementById('music');
+        const volumeReductionInput = document.getElementById('volumeReduction');
+        const mergeButton = document.getElementById('mergeButton');
+        const vocalsPreview = document.getElementById('vocalsPreview');
+        const musicPreview = document.getElementById('musicPreview');
+        const mergedPreview = document.getElementById('mergedPreview');
+
+        // Update audio previews when files are selected
+        vocalsInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                vocalsPreview.src = url;
+            }
+        });
+
+        musicInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                musicPreview.src = url;
+            }
+        });
+
+        mergeButton.addEventListener('click', async () => {
+            const vocalsFile = vocalsInput.files[0];
+            const musicFile = musicInput.files[0];
+            const volumeReduction = volumeReductionInput.value;
+
+            if (!vocalsFile || !musicFile) {
+                alert('Please upload both vocals and music files.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('vocals', vocalsFile);
+            formData.append('music', musicFile);
+            formData.append('volume_reduction', volumeReduction);
+
+            try {
+                const response = await fetch('/merge-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+
+                    // Update merged audio preview
+                    mergedPreview.src = url;
+
+                    // Create a temporary link to download the file
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'combined_audio.mp3';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    alert('Failed to merge audio. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error merging audio:', error);
+                alert('An error occurred while merging the audio files.');
+            }
+        });
+    </script>
+</body>
+</html>
