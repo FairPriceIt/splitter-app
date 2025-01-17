@@ -42,6 +42,12 @@
             margin-bottom: 10px;
         }
 
+        .waveform {
+            margin: 10px 0;
+            height: 100px;
+            width: 100%;
+        }
+
         .download-link {
             display: block;
             margin-bottom: 10px;
@@ -59,10 +65,6 @@
             font-style: italic;
             color: #555;
         }
-
-        .hidden {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -75,32 +77,22 @@
         <div>
             <label for="vocals">Upload Vocals File:</label>
             <input type="file" id="vocals" accept="audio/*" required><br><br>
-    
+            <div>
+                <h3>Vocals Preview:</h3>
+                <audio id="vocalsPreview" controls></audio>
+            </div>
+
             <label for="music">Upload Music File:</label>
             <input type="file" id="music" accept="audio/*" required><br><br>
-    
+            <div>
+                    <h3>Music Preview:</h3>
+                    <audio id="musicPreview" controls></audio>
+            </div>
             <label for="volumeReduction">Music Volume Reduction (dB):</label>
             <input type="number" id="volumeReduction" value="12" min="0"><br><br>
     
             <button id="mergeButton">Merge Audio</button>
         </div>
-    
-        <h2>Audio Previews</h2>
-        <div>
-            <h3>Vocals Preview:</h3>
-            <audio id="vocalsPreview" class="audio-preview" controls></audio>
-        </div>
-        <div>
-            <h3>Music Preview:</h3>
-            <audio id="musicPreview" class="audio-preview" controls></audio>
-        </div>
-        <div>
-            <h3>Merged Audio Preview:</h3>
-            <audio id="mergedPreview" class="audio-preview" controls></audio>
-            <a href="#" id="downloadMerged" class="download-link hidden">Download Merged Audio</a>
-        </div>
-        <p id="loadingMessage" class="loading hidden">Processing your request, please wait...</p>
-        <p id="timeElapsed" class="time-taken hidden"></p>
     </div>
 
     <script>
@@ -111,9 +103,6 @@
         const vocalsPreview = document.getElementById('vocalsPreview');
         const musicPreview = document.getElementById('musicPreview');
         const mergedPreview = document.getElementById('mergedPreview');
-        const downloadMerged = document.getElementById('downloadMerged');
-        const loadingMessage = document.getElementById('loadingMessage');
-        const timeElapsed = document.getElementById('timeElapsed');
 
         // Update audio previews when files are selected
         vocalsInput.addEventListener('change', (event) => {
@@ -147,51 +136,34 @@
             formData.append('music', musicFile);
             formData.append('volume_reduction', volumeReduction);
 
-            mergeButton.disabled = true;
-            loadingMessage.classList.remove('hidden');
-
-            let elapsed = 0;
-            timeElapsed.textContent = '';
-            timeElapsed.classList.add('hidden');
-
-            const timer = setInterval(() => {
-                elapsed += 1;
-                loadingMessage.textContent = `Processing your request, please wait... (${elapsed}s elapsed)`;
-            }, 1000);
-
             try {
-                const startTime = performance.now();
-
                 const response = await fetch('/merge-audio', {
                     method: 'POST',
                     body: formData
                 });
 
-                const endTime = performance.now();
-                clearInterval(timer);
-                const totalTime = ((endTime - startTime) / 1000).toFixed(2);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
 
-                if (!response.ok) {
-                    throw new Error('Failed to merge audio.');
+                    // Update merged audio preview
+                    mergedPreview.src = url;
+
+                    // Create a temporary link to download the file
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'combined_audio.mp3';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    alert('Failed to merge audio. Please try again.');
                 }
-
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-
-                // Update merged audio preview and download link
-                mergedPreview.src = url;
-                downloadMerged.href = url;
-                downloadMerged.classList.remove('hidden');
-
-                // Show processing time
-                timeElapsed.textContent = `Time taken: ${totalTime} seconds`;
-                timeElapsed.classList.remove('hidden');
             } catch (error) {
-                alert('An error occurred: ' + error.message);
-            } finally {
-                clearInterval(timer);
-                mergeButton.disabled = false;
-                loadingMessage.classList.add('hidden');
+                console.error('Error merging audio:', error);
+                alert('An error occurred while merging the audio files.');
             }
         });
     </script>
