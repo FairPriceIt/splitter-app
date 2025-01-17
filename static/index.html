@@ -110,6 +110,18 @@
           }
       });
 
+      document.getElementById('audioUrl').addEventListener('input', function () {
+          const url = this.value.trim();
+          const inputAudioPreview = document.getElementById('inputAudioPreview');
+
+          if (url) {
+              inputAudioPreview.src = url;
+              inputAudioPreview.style.display = 'block';
+          } else {
+              inputAudioPreview.style.display = 'none';
+          }
+      });
+
       document.getElementById('splitterForm').addEventListener('submit', async function (event) {
           event.preventDefault();
 
