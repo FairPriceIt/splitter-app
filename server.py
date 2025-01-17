@@ -168,9 +168,9 @@ def serve_file(filename):
 def send_index():
     return send_from_directory('static', 'index.html')
 
-@app.route('/static/<path:path>')
-def send_file(path):
-    return send_from_directory('static', path)
+# @app.route('/static/<path:path>')
+# def send_file(path):
+#     return send_from_directory('static', path)
 
 
 
