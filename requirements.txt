@@ -5,3 +5,4 @@ torch==2.0.0
 Werkzeug==2.2.3
 numpy==1.26.4
 flask-cors==5.0.0
+pydub==0.25.1

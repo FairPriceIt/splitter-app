@@ -8,6 +8,9 @@ from pathlib import Path
 import torch
 from demucs import pretrained
 import requests
+from pydub import AudioSegment
+import os
+from uuid import uuid4
 MODEL_NAME="htdemucs"
 
 model = pretrained.get_model(MODEL_NAME)
@@ -93,6 +96,64 @@ def upload_file():
         return jsonify({"error": str(e)}), 500
 
 
+
+@app.route('/merge-audio', methods=['POST'])
+def merge_audio():
+    """
+    Merge vocals and music files with a specified volume reduction for the music track.
+    
+    Request:
+        - vocals (file): The uploaded vocals file.
+        - music (file): The uploaded music file.
+        - volume_reduction (form): The volume reduction in dB for the music file (default is 12 dB).
+    
+    Response:
+        - The combined audio file.
+    """
+    # Check if files are provided
+    if 'vocals' not in request.files or 'music' not in request.files:
+        return {"error": "Both vocals and music files are required."}, 400
+
+    vocals_file = request.files['vocals']
+    music_file = request.files['music']
+    volume_reduction = int(request.form.get('volume_reduction', 12))  # Default to 12 dB
+
+    # Create a temporary directory to store files
+    temp_dir = "temp_audio"
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    # Save uploaded files
+    vocals_path = os.path.join(temp_dir, f"vocals_{uuid4()}.mp3")
+    music_path = os.path.join(temp_dir, f"music_{uuid4()}.mp3")
+
+    vocals_file.save(vocals_path)
+    music_file.save(music_path)
+
+    try:
+        # Load audio files
+        vocals_audio = AudioSegment.from_file(vocals_path)
+        music_audio = AudioSegment.from_file(music_path)
+        
+        # Reduce the volume of the music
+        quieter_music = music_audio.apply_gain(-volume_reduction)
+        
+        # Combine vocals with the quieter music
+        combined_audio = vocals_audio.overlay(quieter_music)
+        
+        # Export the combined audio
+        output_path = os.path.join(temp_dir, f"combined_{uuid4()}.mp3")
+        combined_audio.export(output_path, format="mp3")
+        
+        # Send the combined file as a response
+        return send_file(output_path, as_attachment=True, download_name="combined_audio.mp3")
+    finally:
+        # Clean up temporary files
+        os.remove(vocals_path)
+        os.remove(music_path)
+        if os.path.exists(output_path):
+            os.remove(output_path)
+
+
 @app.route('/files/<path:filename>', methods=['GET'])
 @cross_origin()
 def serve_file(filename):
@@ -106,8 +167,7 @@ def serve_file(filename):
 def send_index():
     return send_from_directory('static', 'index.html')
 
-# if __name__ == 'app':
-#     addr=5000
-#     http_server = WSGIServer(('', addr), app)
-#     print("Listening on ",addr)
-#     http_server.serve_forever()
+# addr=5001
+# http_server = WSGIServer(('', addr), app)
+# print("Listening on ",addr)
+# http_server.serve_forever()
