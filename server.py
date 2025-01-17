@@ -12,7 +12,7 @@ from pydub import AudioSegment
 import os
 from uuid import uuid4
 MODEL_NAME="htdemucs"
-from gevent.pywsgi import WSGIServer
+# from gevent.pywsgi import WSGIServer
 
 model = pretrained.get_model(MODEL_NAME)
 
@@ -175,7 +175,7 @@ def send_file(path):
 
 
 
-addr=5001
-http_server = WSGIServer(('', addr), app)
-print("Listening on ",addr)
-http_server.serve_forever()
+# addr=5001
+# http_server = WSGIServer(('', addr), app)
+# print("Listening on ",addr)
+# http_server.serve_forever()
