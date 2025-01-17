@@ -26,7 +26,13 @@
             text-align: center;
         }
 
-        input[type="file"], input[type="url"] {
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="file"], input[type="number"] {
             margin-bottom: 20px;
             display: block;
             width: 100%;
@@ -65,6 +71,10 @@
             font-style: italic;
             color: #555;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -78,16 +88,20 @@
             <label for="vocals">Upload Vocals File:</label>
             <input type="file" id="vocals" accept="audio/*" required>
             <audio id="vocalsPreview" controls></audio>
-            <br><br>
-            <label for="music">Upload Music File:</label>
             <br>
+
+            <label for="music">Upload Music File:</label>
             <input type="file" id="music" accept="audio/*" required>
             <audio id="musicPreview" controls></audio>
-            <br><br>
+            <br>
+
             <label for="volumeReduction">Music Volume Reduction (dB):</label>
-            <input type="number" id="volumeReduction" value="12" min="0"><br><br>
-    
+            <input type="number" id="volumeReduction" value="12" min="0"><br>
+
             <button id="mergeButton">Merge Audio</button>
+
+            <div id="loadingMessage" class="hidden loading">Processing, please wait...</div>
+            <div id="timeElapsed" class="hidden">Time Elapsed: <span id="elapsedTime">0</span>s</div>
         </div>
     </div>
 
@@ -98,9 +112,12 @@
         const mergeButton = document.getElementById('mergeButton');
         const vocalsPreview = document.getElementById('vocalsPreview');
         const musicPreview = document.getElementById('musicPreview');
-        const mergedPreview = document.getElementById('mergedPreview');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const timeElapsedContainer = document.getElementById('timeElapsed');
+        const elapsedTimeSpan = document.getElementById('elapsedTime');
 
-        // Update audio previews when files are selected
+        let timer;
+
         vocalsInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
@@ -127,6 +144,17 @@
                 return;
             }
 
+            // Disable button and show loading message
+            mergeButton.disabled = true;
+            loadingMessage.classList.remove('hidden');
+            timeElapsedContainer.classList.remove('hidden');
+
+            let elapsedSeconds = 0;
+            timer = setInterval(() => {
+                elapsedSeconds++;
+                elapsedTimeSpan.textContent = elapsedSeconds;
+            }, 1000);
+
             const formData = new FormData();
             formData.append('vocals', vocalsFile);
             formData.append('music', musicFile);
@@ -141,9 +169,6 @@
                 if (response.ok) {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
-
-                    // Update merged audio preview
-                    mergedPreview.src = url;
 
                     // Create a temporary link to download the file
                     const a = document.createElement('a');
@@ -160,6 +185,12 @@
             } catch (error) {
                 console.error('Error merging audio:', error);
                 alert('An error occurred while merging the audio files.');
+            } finally {
+                // Re-enable button and hide loading message
+                mergeButton.disabled = false;
+                loadingMessage.classList.add('hidden');
+                timeElapsedContainer.classList.add('hidden');
+                clearInterval(timer);
             }
         });
     </script>
