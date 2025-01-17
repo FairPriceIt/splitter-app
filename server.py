@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file,send_from_directory
 from flask_cors import CORS,cross_origin
 import os
 import uuid
@@ -102,6 +102,9 @@ def serve_file(filename):
         return jsonify({"error": "File not found"}), 404
     return send_file(full_path)
 
+@app.route('/')
+def send_index():
+    return send_from_directory('static', 'index.html')
 
 # if __name__ == 'app':
 #     addr=5000

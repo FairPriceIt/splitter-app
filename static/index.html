@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Splitter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+
+        .result {
+            margin-top: 20px;
+        }
+
+        .audio-preview {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .download-link {
+            display: block;
+            margin-bottom: 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .time-taken {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .loading {
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Audio Splitter</h1>
+        <form id="splitterForm">
+            <label for="audioFile">Upload an audio file:</label><br>
+            <input type="file" id="audioFile" name="audio" accept="audio/*" required><br>
+            <audio id="inputAudioPreview" class="audio-preview" controls style="display: none;"></audio>
+            <button type="submit" id="splitButton">Split Audio</button>
+        </form>
+
+        <div id="loading" class="loading" style="display: none;">Processing your request, please wait...</div>
+
+        <div id="result" class="result" style="display: none;">
+            <h2>Results:</h2>
+            <div>
+                <h3>Vocals</h3>
+                <audio class="audio-preview" controls id="vocalsPreview"></audio>
+                <a href="#" id="vocalsDownload" class="download-link" download>Download Vocals</a>
+            </div>
+            <div>
+                <h3>Music</h3>
+                <audio class="audio-preview" controls id="musicPreview"></audio>
+                <a href="#" id="musicDownload" class="download-link" download>Download Music</a>
+            </div>
+            <div class="time-taken" id="timeTaken"></div>
+        </div>
+    </div>
+
+    <script>
+      const baseUrl = "";
+      console.log(baseUrl);
+
+      document.getElementById('audioFile').addEventListener('change', function () {
+          const file = this.files[0];
+          const inputAudioPreview = document.getElementById('inputAudioPreview');
+
+          if (file) {
+              const fileUrl = URL.createObjectURL(file);
+              inputAudioPreview.src = fileUrl;
+              inputAudioPreview.style.display = 'block';
+          } else {
+              inputAudioPreview.style.display = 'none';
+          }
+      });
+
+      document.getElementById('splitterForm').addEventListener('submit', async function (event) {
+          event.preventDefault();
+
+          const fileInput = document.getElementById('audioFile');
+          const formData = new FormData();
+          formData.append('file', fileInput.files[0]);
+
+          const loadingIndicator = document.getElementById('loading');
+          const resultSection = document.getElementById('result');
+          const splitButton = document.getElementById('splitButton');
+
+          let progressInterval;
+
+          try {
+              let elapsedTime = 0;
+
+              loadingIndicator.style.display = 'block';
+              loadingIndicator.textContent = 'Processing your request, please wait...';
+              splitButton.disabled = true;
+              fileInput.disabled = true;
+              resultSection.style.display = 'none';
+
+              // Update the loading message with elapsed time every second
+              progressInterval = setInterval(() => {
+                  elapsedTime += 1;
+                  loadingIndicator.textContent = `Processing your request, please wait... (${elapsedTime}s elapsed)`;
+              }, 1000);
+
+              const startTime = performance.now();
+
+              const response = await fetch(`${baseUrl}/upload`, {
+                  method: 'POST',
+                  body: formData
+              });
+
+              const endTime = performance.now();
+              const timeTaken = ((endTime - startTime) / 1000).toFixed(2); // Convert to seconds
+
+              if (!response.ok) {
+                  throw new Error('Failed to process audio file.');
+              }
+
+              const result = await response.json();
+              const vocalsUrl = `${baseUrl}${result.vocals_url}`;
+              const musicUrl = `${baseUrl}${result.music_url}`;
+
+              // Show the results
+              loadingIndicator.style.display = 'none';
+              resultSection.style.display = 'block';
+
+              // Set up vocals preview and download
+              const vocalsPreview = document.getElementById('vocalsPreview');
+              const vocalsDownload = document.getElementById('vocalsDownload');
+              vocalsPreview.src = vocalsUrl;
+              vocalsDownload.href = vocalsUrl;
+
+              // Set up music preview and download
+              const musicPreview = document.getElementById('musicPreview');
+              const musicDownload = document.getElementById('musicDownload');
+              musicPreview.src = musicUrl;
+              musicDownload.href = musicUrl;
+
+              // Display time taken
+              const timeTakenElement = document.getElementById('timeTaken');
+              timeTakenElement.textContent = `Time taken: ${timeTaken} seconds`;
+          } catch (error) {
+              alert(error.message);
+          } finally {
+              clearInterval(progressInterval);
+              loadingIndicator.style.display = 'none';
+              splitButton.disabled = false;
+              fileInput.disabled = false;
+          }
+      });
+    </script>
+</body>
+</html>
