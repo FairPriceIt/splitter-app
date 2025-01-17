@@ -5,7 +5,6 @@ from werkzeug.utils import secure_filename
 import demucs.separate
 from pathlib import Path
 import torch
-from gevent.pywsgi import WSGIServer
 from demucs import pretrained
 import requests
 MODEL_NAME="htdemucs"
