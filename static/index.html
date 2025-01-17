@@ -42,6 +42,12 @@
             margin-bottom: 10px;
         }
 
+        .waveform {
+            margin: 10px 0;
+            height: 100px;
+            width: 100%;
+        }
+
         .download-link {
             display: block;
             margin-bottom: 10px;
@@ -60,6 +66,7 @@
             color: #555;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/wavesurfer.js"></script>
 </head>
 <body>
     <div class="container">
@@ -81,11 +88,13 @@
             <h2>Results:</h2>
             <div>
                 <h3>Vocals</h3>
+                <div id="vocalsWaveform" class="waveform"></div>
                 <audio class="audio-preview" controls id="vocalsPreview"></audio>
                 <a href="#" id="vocalsDownload" class="download-link" download>Download Vocals</a>
             </div>
             <div>
                 <h3>Music</h3>
+                <div id="musicWaveform" class="waveform"></div>
                 <audio class="audio-preview" controls id="musicPreview"></audio>
                 <a href="#" id="musicDownload" class="download-link" download>Download Music</a>
             </div>
@@ -182,11 +191,27 @@
               loadingIndicator.style.display = 'none';
               resultSection.style.display = 'block';
 
+              // Initialize waveform for vocals
+              const vocalsWaveform = WaveSurfer.create({
+                  container: '#vocalsWaveform',
+                  waveColor: 'violet',
+                  progressColor: 'purple'
+              });
+              vocalsWaveform.load(vocalsUrl);
+
               // Set up vocals preview and download
               const vocalsPreview = document.getElementById('vocalsPreview');
               const vocalsDownload = document.getElementById('vocalsDownload');
               vocalsPreview.src = vocalsUrl;
               vocalsDownload.href = vocalsUrl;
+
+              // Initialize waveform for music
+              const musicWaveform = WaveSurfer.create({
+                  container: '#musicWaveform',
+                  waveColor: 'lightblue',
+                  progressColor: 'blue'
+              });
+              musicWaveform.load(musicUrl);
 
               // Set up music preview and download
               const musicPreview = document.getElementById('musicPreview');
