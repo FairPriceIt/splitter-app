@@ -168,7 +168,7 @@ def send_index():
     return send_from_directory('static', 'index.html')
 
 @app.route('/<path:path>')
-def send_index(path):
+def send_file(path):
     return send_from_directory('static', path)
 
 
