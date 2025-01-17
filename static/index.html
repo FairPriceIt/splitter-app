@@ -147,7 +147,7 @@
 
               const result = await response.json();
               const vocalsUrl = `${baseUrl}${result.vocals_url}`;
-              const musicUrl = `${baseUrl}${result.music_url}`;
+              const musicUrl = `${baseUrl}${result.no_vocals_url}`;
 
               // Show the results
               loadingIndicator.style.display = 'none';
