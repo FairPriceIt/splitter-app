@@ -26,8 +26,11 @@
             text-align: center;
         }
 
-        input[type="file"] {
+        input[type="file"], input[type="url"] {
             margin-bottom: 20px;
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .result {
@@ -62,8 +65,12 @@
     <div class="container">
         <h1>Audio Splitter</h1>
         <form id="splitterForm">
-            <label for="audioFile">Upload an audio file:</label><br>
-            <input type="file" id="audioFile" name="audio" accept="audio/*" required><br>
+            <label for="audioFile">Upload an audio file:</label>
+            <input type="file" id="audioFile" name="audio" accept="audio/*">
+
+            <label for="audioUrl">Or enter an audio URL:</label>
+            <input type="url" id="audioUrl" name="url" placeholder="Enter audio URL">
+
             <audio id="inputAudioPreview" class="audio-preview" controls style="display: none;"></audio>
             <button type="submit" id="splitButton">Split Audio</button>
         </form>
@@ -107,8 +114,17 @@
           event.preventDefault();
 
           const fileInput = document.getElementById('audioFile');
+          const urlInput = document.getElementById('audioUrl');
           const formData = new FormData();
-          formData.append('file', fileInput.files[0]);
+
+          if (fileInput.files.length > 0) {
+              formData.append('file', fileInput.files[0]);
+          } else if (urlInput.value.trim() !== "") {
+              formData.append('url', urlInput.value.trim());
+          } else {
+              alert('Please upload a file or enter a URL.');
+              return;
+          }
 
           const loadingIndicator = document.getElementById('loading');
           const resultSection = document.getElementById('result');
@@ -123,6 +139,7 @@
               loadingIndicator.textContent = 'Processing your request, please wait...';
               splitButton.disabled = true;
               fileInput.disabled = true;
+              urlInput.disabled = true;
               resultSection.style.display = 'none';
 
               // Update the loading message with elapsed time every second
@@ -175,6 +192,7 @@
               loadingIndicator.style.display = 'none';
               splitButton.disabled = false;
               fileInput.disabled = false;
+              urlInput.disabled = false;
           }
       });
     </script>
