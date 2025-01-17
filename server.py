@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS,cross_origin
 import os
 import uuid
 from werkzeug.utils import secure_filename
@@ -12,6 +13,9 @@ MODEL_NAME="htdemucs"
 model = pretrained.get_model(MODEL_NAME)
 
 app = Flask(__name__)
+cors=CORS(app)
+
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -53,6 +57,7 @@ def download_file_from_url(url, upload_folder):
 
 
 @app.route('/upload', methods=['POST'])
+@cross_origin()
 def upload_file():
     if 'file' not in request.files and 'url' not in request.form:
         return jsonify({"error": "No file or URL provided"}), 400
@@ -89,6 +94,7 @@ def upload_file():
 
 
 @app.route('/files/<path:filename>', methods=['GET'])
+@cross_origin()
 def serve_file(filename):
     full_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
     print(full_path)
