@@ -199,10 +199,18 @@
               });
               vocalsWaveform.load(vocalsUrl);
 
-              // Set up vocals preview and download
               const vocalsPreview = document.getElementById('vocalsPreview');
-              const vocalsDownload = document.getElementById('vocalsDownload');
               vocalsPreview.src = vocalsUrl;
+              vocalsWaveform.on('seek', (progress) => {
+                  vocalsPreview.currentTime = progress * vocalsPreview.duration;
+              });
+              vocalsPreview.ontimeupdate = () => {
+                  if (!vocalsWaveform.isPlaying()) {
+                      vocalsWaveform.setCurrentTime(vocalsPreview.currentTime);
+                  }
+              };
+
+              const vocalsDownload = document.getElementById('vocalsDownload');
               vocalsDownload.href = vocalsUrl;
 
               // Initialize waveform for music
@@ -213,10 +221,18 @@
               });
               musicWaveform.load(musicUrl);
 
-              // Set up music preview and download
               const musicPreview = document.getElementById('musicPreview');
-              const musicDownload = document.getElementById('musicDownload');
               musicPreview.src = musicUrl;
+              musicWaveform.on('seek', (progress) => {
+                  musicPreview.currentTime = progress * musicPreview.duration;
+              });
+              musicPreview.ontimeupdate = () => {
+                  if (!musicWaveform.isPlaying()) {
+                      musicWaveform.setCurrentTime(musicPreview.currentTime);
+                  }
+              };
+
+              const musicDownload = document.getElementById('musicDownload');
               musicDownload.href = musicUrl;
 
               // Display time taken
